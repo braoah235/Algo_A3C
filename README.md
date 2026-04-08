@@ -2,7 +2,6 @@
     
 ### ☢️ Breakout - A3C + Dueling Network :radioactive:
 </div>
-!python "C:/Users/brahi/Documents/Panification_en_Intelligence_Artificielle/Breakout_A3C-master/main.py"
 
 **Breakout - A3C + LSTM**
 
