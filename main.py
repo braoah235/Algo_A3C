@@ -39,7 +39,7 @@ class Params():
         self.gamma = 0.995
         self.tau = 1.0
         self.seed = 1
-        self.num_processes = 11
+        self.num_processes = 19
         self.num_steps = 50
         self.max_episode_length = 10000
         self.env_name = 'Breakout-v0'
