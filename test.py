@@ -13,7 +13,13 @@ from model import ActorCritic
 # no exploration in the testing phase
 def test(rank, params, shared_model, model_type="standard"):
     torch.manual_seed(params.seed + rank)  # asynchronizing the test agents
-    env = create_atari_env(params.env_name, video=True, stack_frames=params.stack_frames)
+    env = create_atari_env(
+        params.env_name,
+        video=True,
+        stack_frames=params.stack_frames,
+        clip_rewards=False,
+        episodic_life=False,
+    )
     env.seed(params.seed + rank)  # asynchronizing the environment
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
     model.eval()  # set in eval mode as it is not training anymore

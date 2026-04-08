@@ -15,7 +15,12 @@ def ensure_shared_grads(model, shared_model):
 def train(rank, params, shared_model, optimizer):
     torch.manual_seed(params.seed + rank)
 
-    env = create_atari_env(params.env_name, stack_frames=params.stack_frames)
+    env = create_atari_env(
+        params.env_name,
+        stack_frames=params.stack_frames,
+        clip_rewards=True,
+        episodic_life=True,
+    )
     env.seed(params.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
