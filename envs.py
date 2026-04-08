@@ -115,120 +115,6 @@ class FireResetEnv(gym.Wrapper):
         return obs
 
 
-class MaxAndSkipEnv(gym.Wrapper):
-    """Return only every `skip`-th frame and max-pool over the last two raw frames."""
-
-    def __init__(self, env, skip: int = 4):
-        super().__init__(env)
-        self.skip = max(1, int(skip))
-        self._obs_buffer = deque(maxlen=2)
-
-    def step(self, action):
-        total_reward = 0.0
-        done = False
-        info = {}
-        obs = None
-        terminated = False
-        truncated = False
-
-        for _ in range(self.skip):
-            out = self.env.step(action)
-            if isinstance(out, tuple) and len(out) == 5:
-                obs, reward, terminated, truncated, info = out
-                done = terminated or truncated
-            else:
-                obs, reward, done, info = out
-                terminated, truncated = bool(done), False
-
-            self._obs_buffer.append(obs)
-            total_reward += float(reward)
-            if done:
-                break
-
-        if len(self._obs_buffer) == 2:
-            max_frame = np.maximum(self._obs_buffer[0], self._obs_buffer[1])
-        else:
-            max_frame = self._obs_buffer[0]
-
-        if isinstance(out, tuple) and len(out) == 5:
-            return max_frame, total_reward, terminated, truncated, info
-        return max_frame, total_reward, done, info
-
-    def reset(self, **kwargs):
-        self._obs_buffer.clear()
-        return self.env.reset(**kwargs)
-
-
-class EpisodicLifeEnv(gym.Wrapper):
-    """Make loss of life terminal, but only reset env when game is truly over."""
-
-    def __init__(self, env):
-        super().__init__(env)
-        self.lives = 0
-        self.was_real_done = True
-
-    def step(self, action):
-        out = self.env.step(action)
-        if isinstance(out, tuple) and len(out) == 5:
-            obs, reward, terminated, truncated, info = out
-            done = terminated or truncated
-        else:
-            obs, reward, done, info = out
-            terminated, truncated = bool(done), False
-
-        self.was_real_done = done
-        lives = info.get("lives", self.lives) if isinstance(info, dict) else self.lives
-
-        # Only mark terminal on life loss when there are lives left.
-        if lives < self.lives and lives > 0:
-            done = True
-            terminated, truncated = True, False
-
-        self.lives = lives
-
-        if isinstance(out, tuple) and len(out) == 5:
-            return obs, reward, terminated, truncated, info
-        return obs, reward, done, info
-
-    def reset(self, **kwargs):
-        should_return_info = False
-        if self.was_real_done:
-            out = self.env.reset(**kwargs)
-            if isinstance(out, tuple) and len(out) == 2:
-                obs, info = out
-                should_return_info = True
-            else:
-                obs, info = out, {}
-        else:
-            # Advance one frame after life loss to continue same game.
-            step_out = self.env.step(0)
-            if isinstance(step_out, tuple) and len(step_out) == 5:
-                obs, _reward, terminated, truncated, info = step_out
-                done = terminated or truncated
-            else:
-                obs, _reward, done, info = step_out
-            if done:
-                out = self.env.reset(**kwargs)
-                if isinstance(out, tuple) and len(out) == 2:
-                    obs, info = out
-                    should_return_info = True
-                else:
-                    obs, info = out, {}
-
-        self.lives = info.get("lives", 0) if isinstance(info, dict) else 0
-
-        if should_return_info:
-            return obs, info
-        return obs
-
-
-class ClipRewardEnv(gym.RewardWrapper):
-    """Clip rewards to {-1, 0, +1} by sign."""
-
-    def reward(self, reward):
-        return float(np.sign(reward))
-
-
 class AtariRescale42x42(gym.ObservationWrapper):
     """Convert Atari RGB frames to normalized grayscale 42x42, channel-first."""
 
@@ -349,28 +235,17 @@ def _make_atari_env(env_name: str, video: bool = False):
     ) from last_error
 
 
-def create_atari_env(
-    env_name: str,
-    video: bool = False,
-    stack_frames: int = 1,
-    clip_rewards: bool = True,
-    episodic_life: bool = True,
-):
+def create_atari_env(env_name: str, video: bool = False, stack_frames: int = 1):
     env = _make_atari_env(env_name, video=video)
 
     # Classic Atari reset handling used by many A3C baselines.
     env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    if episodic_life:
-        env = EpisodicLifeEnv(env)
     try:
         action_meanings = env.unwrapped.get_action_meanings()
     except Exception:
         action_meanings = []
     if "FIRE" in action_meanings:
         env = FireResetEnv(env)
-    if clip_rewards:
-        env = ClipRewardEnv(env)
 
     if video:
         os.makedirs("test", exist_ok=True)

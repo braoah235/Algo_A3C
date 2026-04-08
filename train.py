@@ -17,8 +17,6 @@ def train(rank, params, shared_model, optimizer):
     env = create_atari_env(
         params.env_name,
         stack_frames=params.stack_frames,
-        clip_rewards=True,
-        episodic_life=True,
     ) #breakout-V0
     env.seed(params.seed + rank) #aligning the seed of the environment on the seed of the agent
     model = ActorCritic(env.observation_space.shape[0], env.action_space) 

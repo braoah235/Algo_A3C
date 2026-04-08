@@ -17,8 +17,6 @@ def test(rank, params, shared_model, model_type="standard"):
         params.env_name,
         video=True,
         stack_frames=params.stack_frames,
-        clip_rewards=False,
-        episodic_life=False,
     )
     env.seed(params.seed + rank)  # asynchronizing the environment
     model = ActorCritic(env.observation_space.shape[0], env.action_space)

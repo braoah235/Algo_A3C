@@ -18,8 +18,6 @@ def train(rank, params, shared_model, optimizer):
     env = create_atari_env(
         params.env_name,
         stack_frames=params.stack_frames,
-        clip_rewards=True,
-        episodic_life=True,
     )
     env.seed(params.seed + rank)
 

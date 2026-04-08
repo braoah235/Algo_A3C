@@ -44,8 +44,7 @@ class Params():
         self.max_episode_length = 10000
         self.env_name = 'Breakout-v0'
         self.stack_frames = 4
-        # Reward clipping is handled by ClipRewardEnv in envs.py.
-        self.clip_reward = False
+        self.clip_reward = True
         # Keep Atari reward shaping neutral by default; strong penalties can stall learning.
         self.step_penalty = 0.0
         self.life_loss_penalty = 0.0
