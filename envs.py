@@ -235,7 +235,11 @@ def _make_atari_env(env_name: str, video: bool = False):
     ) from last_error
 
 
-def create_atari_env(env_name: str, video: bool = False, stack_frames: int = 1):
+def create_atari_env(
+    env_name: str,
+    video: bool = False,
+    stack_frames: int = 1,
+):
     env = _make_atari_env(env_name, video=video)
 
     # Classic Atari reset handling used by many A3C baselines.
